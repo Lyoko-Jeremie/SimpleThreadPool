@@ -16,10 +16,6 @@
 #include <tuple>
 #include <utility>
 
-#include <iostream>
-#include <string>
-#include <complex.h>
-
 
 template<typename ReturnType, class CallAble, typename... ArgsTypes>
 class SimpleThreadPool
