@@ -28,6 +28,7 @@ public:
 	SimpleThreadPool& operator=(const SimpleThreadPool& o) = delete;
 
 	void AddThread(size_t num = 1);
+	void StopAllThread();
 
 	std::future<ReturnType> async(CallAble&& fn, ArgsTypes... args);
 
@@ -95,21 +96,7 @@ template<typename ReturnType, class CallAble, typename... ArgsTypes>
 SimpleThreadPool<ReturnType, CallAble, ArgsTypes...>
 ::~SimpleThreadPool()
 {
-	{
-		std::unique_lock<std::mutex> u(this->mtxTaskTodoList);
-		this->Stop.store(true);
-		this->cvarTaskTodoList.notify_all();
-	}
-	{
-		std::lock_guard<std::mutex> g(this->mtxThreadPool);
-		for(auto &a: this->ThreadPool)
-		{
-			if(a.joinable())
-			{
-				a.join();
-			}
-		}
-	}
+	this->StopAllThread();
 }
 
 template<typename ReturnType, class CallAble, typename... ArgsTypes>
@@ -127,6 +114,26 @@ SimpleThreadPool<ReturnType, CallAble, ArgsTypes...>
 				this
 				)
 			);
+	}
+}
+
+template <typename ReturnType, class CallAble, typename ... ArgsTypes>
+void SimpleThreadPool<ReturnType, CallAble, ArgsTypes...>::StopAllThread()
+{
+	{
+		std::unique_lock<std::mutex> u(this->mtxTaskTodoList);
+		this->Stop.store(true);
+		this->cvarTaskTodoList.notify_all();
+	}
+	{
+		std::lock_guard<std::mutex> g(this->mtxThreadPool);
+		for (auto &a : this->ThreadPool)
+		{
+			if (a.joinable())
+			{
+				a.join();
+			}
+		}
 	}
 }
 
